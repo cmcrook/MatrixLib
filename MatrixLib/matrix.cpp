@@ -66,7 +66,7 @@ int Matrix::getHeight() {
 	return height;
 }
 
-//Returms the number of elements in the matrix
+//Returns the number of elements in the matrix
 int Matrix::getSize() {
 	return matrix.size();
 }
