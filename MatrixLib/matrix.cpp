@@ -1,17 +1,18 @@
 #include "matrix.hpp"
 #include <iostream>
+#include <cmath>
 
-Matrix operator*(double c, Matrix m){
-	for(int i  = 0; i < m.getHeight(); i++){
-		for(int j = 0; j < m.getWidth(); j++){
-			m.setElement(j,i,c*m.getElement(j,i));
+Matrix operator*(double c, Matrix m) {
+	for (int i = 0; i < m.getHeight(); i++) {
+		for (int j = 0; j < m.getWidth(); j++) {
+			m.setElement(j, i, c * m.getElement(j, i));
 		}
 	}
 	return m;
 }
 
-Matrix operator*(Matrix m, double c){
-	return c*m;
+Matrix operator*(Matrix m, double c) {
+	return c * m;
 }
 
 Matrix::Matrix(int width, int height, double elements[]) {
@@ -26,49 +27,62 @@ Matrix::Matrix(int width, int height, std::vector<double> elements) {
 	matrix = elements;
 }
 
+//Generates a matrix of specified width and height with each element as val
 void Matrix::fill(int width, int height, double val) {
 	this->width = width;
 	this->height = height;
 	matrix.assign(width * height, val);
 }
 
+//Generates a matrix of zeros of specified width and height
 void Matrix::zeros(int width, int height) {
 	fill(width, height, 0);
 }
 
+//Generates an identity matrix of specified width and height, if matrix is not square then enters largest possible diagonal with 1s
 void Matrix::identity(int width, int height) {
+	//Creates blank matrix full of zeros
 	zeros(width, height);
+
+	//Adds 1s on largest diagonal
 	for (int i = 0; i < ((height <= width) ? height : width); i++) {
 		matrix.insert(matrix.begin() + width * i + i, 1);
 		matrix.erase(matrix.begin() + width * i + i + 1);
 	}
 }
 
+//Generates a matrix of ones of specified width and height
 void Matrix::ones(int width, int height) {
 	fill(width, height, 1);
 }
 
+//Returns the width of the matrix
 int Matrix::getWidth() {
 	return width;
 }
 
+//Returns the height of the matrix
 int Matrix::getHeight() {
 	return height;
 }
 
+//Returms the number of elements in the matrix
 int Matrix::getSize() {
 	return matrix.size();
 }
 
+//Returns the value of the element at indices i and j
 double Matrix::getElement(int i, int j) {
 	int index = width * j + i;
 	return matrix.at(index);
 }
 
+//Returns a vector of the elements in the matrix
 std::vector<double> Matrix::getElements() {
 	return matrix;
 }
 
+//Returns a matrix
 Matrix Matrix::getSubMatrix(int iW, int fW, int iH, int fH) {
 	int newWidth = fW - iW + 1;
 	int newHeight = fH - iH + 1;
@@ -82,6 +96,7 @@ Matrix Matrix::getSubMatrix(int iW, int fW, int iH, int fH) {
 	return sub;
 }
 
+//Sets the value of the element at indices i and j to val
 void Matrix::setElement(int i, int j, double val) {
 	if (i > width - 1) {
 		for (int m = 0; m < height; m++) {
@@ -107,10 +122,12 @@ void Matrix::setElement(int i, int j, double val) {
 	matrix.erase(matrix.begin() + width * j + i + 1);
 }
 
+//
 void Matrix::setElements(std::vector<double> elements) {
 	matrix = elements;
 }
 
+//
 void Matrix::insertSubMatrix(int x, int y, Matrix m) {
 	int widthLowerBound = x;
 	int widthUpperBound = x + m.width;
@@ -124,7 +141,8 @@ void Matrix::insertSubMatrix(int x, int y, Matrix m) {
 			}
 		}
 	} else {
-		std::cout << "Index out of bounds or sub matrix is larger than matrix!"
+		std::cout
+				<< "INSERT_SUB_MATRIX::Index out of bounds or sub matrix is larger than matrix!"
 				<< std::endl;
 	}
 }
@@ -151,6 +169,62 @@ void Matrix::luDecomp(Matrix& L, Matrix& U) {
 			L.insertSubMatrix(1, 1, rL);
 			U.insertSubMatrix(1, 1, rU);
 		}
+	}
+}
+
+void Matrix::qrDecomp(Matrix& Q, Matrix& R) {
+	Matrix U, col;
+	Q.zeros(width, height);
+	U.zeros(width, height);
+	col.zeros(1, height);
+
+	for (int i = 0; i < width; i++) {
+		col = getSubMatrix(i, i, 0, height - 1);
+		for (int j = 0; j < i; j++) {
+			col = col - U.getSubMatrix(j, j, 0, U.getHeight() - 1).proj(
+					getSubMatrix(i, i, 0, height - 1));
+		}
+		Q.insertSubMatrix(i, 0, col.unitize());
+		U.insertSubMatrix(i, 0, col);
+	}
+	R = Q.transpose() * (*this);
+}
+
+Matrix Matrix::proj(Matrix m) {
+	Matrix projection;
+	Matrix u = *this;
+
+	double p = (u.transpose() * m).getElement(0, 0)
+			/ (u.transpose() * u).getElement(0, 0);
+	projection = p * u;
+
+	return projection;
+}
+
+double Matrix::norm() {
+	if ((height == 1) ^ (width == 1)) {
+		double sum = 0;
+		for (int i = 0; i < ((height > width) ? height : width); i++) {
+			sum += pow(matrix.at(i), 2);
+		}
+		return sqrt(sum);
+	} else {
+		return -1;
+	}
+}
+
+Matrix Matrix::unitize() {
+	if ((height == 1) ^ (width == 1)) {
+		double normal = norm();
+		Matrix n;
+		n.zeros(width, height);
+		for (int i = 0; i < ((height > width) ? height : width); i++) {
+			n.setElement((width > height) ? i : 0, (height > width) ? i : 0,
+					matrix.at(i) / normal);
+		}
+		return n;
+	} else {
+		return *this;
 	}
 }
 
@@ -186,8 +260,8 @@ Matrix Matrix::backwardSub(Matrix U, Matrix m) {
 
 	double sum = 0;
 
-	for (int i = U.height-1; i >= 0; i--) {
-		for (int j = U.height-1; j >= i ; j--) {
+	for (int i = U.height - 1; i >= 0; i--) {
+		for (int j = U.height - 1; j >= i; j--) {
 			sum += U.getElement(j, i) * x.getElement(0, j);
 		}
 		x.setElement(0, i, (m.getElement(0, i) - sum) / U.getElement(i, i));
@@ -197,9 +271,45 @@ Matrix Matrix::backwardSub(Matrix U, Matrix m) {
 	return x;
 }
 
+Matrix Matrix::operator+(Matrix m) {
+	if (width == m.getWidth() && height == m.getHeight()) {
+		Matrix sum;
+		sum.zeros(width, height);
+
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				sum.setElement(i, j, getElement(i, j) + m.getElement(i, j));
+			}
+		}
+
+		return sum;
+	} else {
+		std::cout << "OPERATOR+::Matrix dimensions do not match!" << std::endl;
+		return *(new Matrix());
+	}
+}
+
+Matrix Matrix::operator-(Matrix m) {
+	if (width == m.getWidth() && height == m.getHeight()) {
+		Matrix sum;
+		sum.zeros(width, height);
+
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				sum.setElement(i, j, getElement(i, j) - m.getElement(i, j));
+			}
+		}
+
+		return sum;
+	} else {
+		std::cout << "OPERATOR-::Matrix dimensions do not match!" << std::endl;
+		return *(new Matrix());
+	}
+}
+
 Matrix Matrix::operator*(Matrix k) {
 	if (width != k.height) {
-		std::cout << "Matrix dimensions do not agree!" << std::endl;
+		std::cout << "OPERATOR*::Matrix dimensions do not agree!" << std::endl;
 	}
 	std::vector<double> productVec;
 	double elementSum = 0;
@@ -216,22 +326,22 @@ Matrix Matrix::operator*(Matrix k) {
 	return product;
 }
 
-Matrix Matrix::operator^(int i){
+Matrix Matrix::operator^(int i) {
 	Matrix m = *this;
 
-	if(i == 0){
+	if (i == 0) {
 		m.identity(width, height);
 		return m;
 	}
 
-	if(i < 0){
+	if (i < 0) {
 		m = m.inverse();
 		i *= -1;
 	}
 
 	Matrix n = m;
-	for(int j = 0; j < i-1; j++){
-		n  = n*m;
+	for (int j = 0; j < i - 1; j++) {
+		n = n * m;
 	}
 
 	return n;
@@ -241,6 +351,21 @@ void Matrix::operator=(Matrix k) {
 	this->width = k.getWidth();
 	this->height = k.getHeight();
 	setElements(k.getElements());
+}
+
+bool Matrix::operator==(Matrix m) {
+	if (width == m.getWidth() && height == m.getHeight()) {
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				if (getElement(i, j) != m.getElement(i, j)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	} else {
+		return false;
+	}
 }
 
 Matrix Matrix::transpose() {
@@ -261,15 +386,15 @@ double Matrix::det() {
 		Matrix L, U;
 		luDecomp(L, U);
 
-		double productL = 1, productU = 1;
+		double productU = 1;
+
 		for (int i = 0; i < L.getWidth(); i++) {
-//			productL *= L.getElement(i, i);
 			productU *= U.getElement(i, i);
 		}
-//		return productL * productU;
+
 		return productU;
 	} else {
-		std::cout << "Matrix sides are not equal!" << std::endl;
+		std::cout << "DET::Matrix sides are not equal!" << std::endl;
 		return -1;
 	}
 }
@@ -285,22 +410,21 @@ Matrix Matrix::inverse() {
 
 		for (int i = 0; i < width; i++) {
 			result.insertSubMatrix(i, 0,
-					luSolve(L, U, id.getSubMatrix(i, i, 0, height-1)));
+					luSolve(L, U, id.getSubMatrix(i, i, 0, height - 1)));
 		}
 
 		return result;
 	} else {
-		std::cout << "Matrix is singular!" << std::endl;
+		std::cout << "INVERSE::Matrix is singular!" << std::endl;
 		return *(new Matrix());
 	}
 }
 
-//need to finish
-Matrix Matrix::adj(){
-	return (inverse()*det());
+Matrix Matrix::adj() {
+	return (inverse() * det());
 }
 
-Matrix Matrix::cofactor(){
+Matrix Matrix::cofactor() {
 	return adj().transpose();
 }
 
@@ -314,6 +438,5 @@ void Matrix::printMatrix() {
 		}
 		std::cout << std::endl;
 	}
+	std::cout << std::endl;
 }
-
-

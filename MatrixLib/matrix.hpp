@@ -32,14 +32,21 @@ class Matrix {
 		void insertSubMatrix(int, int, Matrix);
 
 		void luDecomp(Matrix& L, Matrix& U);
+		void qrDecomp(Matrix& Q, Matrix& R);
+		Matrix proj(Matrix);
+		double norm();
+		Matrix unitize();
 		Matrix luSolve(Matrix, Matrix, Matrix);
 		Matrix forwardSub(Matrix, Matrix);
 		Matrix backwardSub(Matrix, Matrix);
 
 		//Overridden operators: NEED TO FIGURE OUT ORDER INDEPENDENCE
 		Matrix operator*(Matrix);
+		Matrix operator+(Matrix);
+		Matrix operator-(Matrix);
 		Matrix operator^(int);
 		void operator=(Matrix);
+		bool operator==(Matrix);
 
 		Matrix transpose();
 		double det();
