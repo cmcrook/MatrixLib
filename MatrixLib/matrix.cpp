@@ -127,7 +127,9 @@ void Matrix::setElements(std::vector<double> elements) {
 	matrix = elements;
 }
 
-//
+//Inserts a matrix m into the the instance at a upper left index denoted by x and y
+//If the matrix does not fit within the size of the instance at the indices x and y then
+//An error is printed to the console and nothing is performed
 void Matrix::insertSubMatrix(int x, int y, Matrix m) {
 	int widthLowerBound = x;
 	int widthUpperBound = x + m.width;
@@ -147,6 +149,7 @@ void Matrix::insertSubMatrix(int x, int y, Matrix m) {
 	}
 }
 
+//Decomposes matrix into two triangular matrices denoted a L for Lower and U for upper
 void Matrix::luDecomp(Matrix& L, Matrix& U) {
 	L.identity(width, height);
 	U = *this;
@@ -172,6 +175,7 @@ void Matrix::luDecomp(Matrix& L, Matrix& U) {
 	}
 }
 
+//Decomposes matrix into a upper triangular matrix R and an orthogonal matrix Q
 void Matrix::qrDecomp(Matrix& Q, Matrix& R) {
 	Matrix U, col;
 	Q.zeros(width, height);
@@ -190,6 +194,8 @@ void Matrix::qrDecomp(Matrix& Q, Matrix& R) {
 	R = Q.transpose() * (*this);
 }
 
+//Projects the vector m onto this vector
+//Only valid if both are same size and one dimensional on a side
 Matrix Matrix::proj(Matrix m) {
 	Matrix projection;
 	Matrix u = *this;
@@ -201,6 +207,8 @@ Matrix Matrix::proj(Matrix m) {
 	return projection;
 }
 
+//Computes the norm of the vector
+//Only valid for one dimensional matrices
 double Matrix::norm() {
 	if ((height == 1) ^ (width == 1)) {
 		double sum = 0;
@@ -213,6 +221,7 @@ double Matrix::norm() {
 	}
 }
 
+//Returns a unit vector of this instance
 Matrix Matrix::unitize() {
 	if ((height == 1) ^ (width == 1)) {
 		double normal = norm();
@@ -237,6 +246,7 @@ Matrix Matrix::luSolve(Matrix L, Matrix U, Matrix m) {
 	}
 }
 
+//Performs forward substitution to solve for in L*z = m where L is a lower triangular matrix
 Matrix Matrix::forwardSub(Matrix L, Matrix m) {
 	Matrix z;
 	z.zeros(1, L.getHeight());
@@ -254,6 +264,7 @@ Matrix Matrix::forwardSub(Matrix L, Matrix m) {
 	return z;
 }
 
+//Performs backwards substitution to solve for x in U*x = m where U is an upper triangular matrix
 Matrix Matrix::backwardSub(Matrix U, Matrix m) {
 	Matrix x;
 	x.zeros(1, U.getHeight());
@@ -428,6 +439,7 @@ Matrix Matrix::cofactor() {
 	return adj().transpose();
 }
 
+//Prints the matrix to the console
 void Matrix::printMatrix() {
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
