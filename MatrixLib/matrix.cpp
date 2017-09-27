@@ -46,8 +46,7 @@ void Matrix::identity(int width, int height) {
 
 	//Adds 1s on largest diagonal
 	for (int i = 0; i < ((height <= width) ? height : width); i++) {
-		matrix.insert(matrix.begin() + width * i + i, 1);
-		matrix.erase(matrix.begin() + width * i + i + 1);
+		matrix[width * i + i] = 1;
 	}
 }
 
@@ -118,8 +117,7 @@ void Matrix::setElement(int i, int j, double val) {
 		height = j + 1;
 	}
 
-	matrix.insert(matrix.begin() + width * j + i, val);
-	matrix.erase(matrix.begin() + width * j + i + 1);
+	matrix[width * j + i] = val;
 }
 
 //
